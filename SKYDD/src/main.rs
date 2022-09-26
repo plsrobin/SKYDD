@@ -1,3 +1,9 @@
+//BLock_on?? behöver för async i thread!?!?!?
+use futures::executor::block_on;
+
+//jag ÄLSKAR threads
+use std::thread;
+
 //Matrix någonting?
 use std::{convert::TryFrom, str::SplitAsciiWhitespace};
 use matrix_sdk::{
@@ -11,11 +17,24 @@ use iced::{executor, Application, Command, Element, Settings, Text};
 //main
 #[tokio::main]
 async fn main() {
-    matrixtest().await;
-    icedtest();
+   
+
+    //thread::spawn(|| icedtest())
+
+    //matrixtest().await.map_err(|err| println!("{:?}", err)).ok();
+
+
+    //STARTAR THREAD MEN ENDÅ INTE (TOKIO THREAD, funkar :) )
+    tokio::spawn(async move{
+        let _ = matrixtest().await;
+    });
+
+    //flytta till en annan porcess med tokio thread (eller inte)
+    icedtest().await.map_err(|err| println!("{:?}", err)).ok();
+
 }
 
-fn icedtest() -> iced::Result  {
+async fn icedtest() -> iced::Result  {
     Hello::run(Settings::default())
 }
 
