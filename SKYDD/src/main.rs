@@ -17,7 +17,8 @@ use iced::{executor, Application, Command, Element, Settings, Text};
 //main
 #[tokio::main]
 async fn main() {
-   
+
+    let showmsg;
 
     //thread::spawn(|| icedtest())
 
@@ -34,16 +35,24 @@ async fn main() {
 
 }
 
+//Messages between ui and other functions
+#[derive(Debug, Clone)]
+enum Message {
+    Rmsg,
+}
+
+
 async fn icedtest() -> iced::Result  {
     Hello::run(Settings::default())
 }
 
 //Shows text
+//f
 struct Hello;
 
 impl Application for Hello {
     type Executor = executor::Default;
-    type Message = ();
+    type Message = Message;
     type Flags = ();
 
     fn new(_flags: ()) -> (Hello, Command<Self::Message>) {
@@ -55,7 +64,13 @@ impl Application for Hello {
     }
 
     fn update(&mut self, _message: Self::Message) -> Command<Self::Message> {
-        Command::none()
+        match _message {
+			Message::Rmsg => {
+				//do sutff
+			}
+		};
+
+		Command::none()
     }
 
     fn view(&mut self) -> Element<Self::Message> {
@@ -72,6 +87,8 @@ async fn matrixtest() -> anyhow::Result<()> {
 
 	client.register_event_handler(|ev: SyncRoomMessageEvent| async move {
 		println!("Received a message {:?}", ev);
+        //funkar inte eftersom showmsg inte är global
+        //showmsg = "{:?}";
 	})
 	.await;
 
