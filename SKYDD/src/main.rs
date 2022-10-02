@@ -12,13 +12,13 @@ use matrix_sdk::{
 };
 
 //iced (gui) imports
-use iced::{executor, Application, Command, Element, Settings, Text};
+//use iced::widget::{container};
+use iced::{executor, Application, Command, Element, Settings, Text, Container, Length, Scrollable, Column};
 
 //main
 #[tokio::main]
 async fn main() {
 
-    let showmsg;
 
     //thread::spawn(|| icedtest())
 
@@ -38,7 +38,9 @@ async fn main() {
 //Messages between ui and other functions
 #[derive(Debug, Clone)]
 enum Message {
-    Rmsg,
+    SyncRoom,
+    ButtonPresed,
+
 }
 
 
@@ -55,7 +57,7 @@ impl Application for Hello {
     type Message = Message;
     type Flags = ();
 
-    fn new(_flags: ()) -> (Hello, Command<Self::Message>) {
+    fn new(_flags: ()) -> (Hello, Command<Message>) {
         (Hello, Command::none())
     }
 
@@ -63,18 +65,33 @@ impl Application for Hello {
         String::from("A cool application")
     }
 
-    fn update(&mut self, _message: Self::Message) -> Command<Self::Message> {
+    fn update(&mut self, _message: Message) -> Command<Message> {
         match _message {
-			Message::Rmsg => {
+			Message::SyncRoom => {
 				//do sutff
+				
 			}
+            Message::ButtonPresed => {
+                //do stuff
+            }
 		};
 
 		Command::none()
     }
 
-    fn view(&mut self) -> Element<Self::Message> {
-        Text::new("Hello, world!").into()
+    fn view(&mut self) -> Element<Message> {
+        let text = Text::new("bruh")
+                .width(Length::Fill);
+        let text2 = Text::new("bruh")
+                .width(Length::Fill);
+       let content = Column::new()
+           .push(text)
+           .push(text2);
+
+       Container::new(
+           content.width(Length::Fill),
+        )
+        .into()
     }
 }
 
