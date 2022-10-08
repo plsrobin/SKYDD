@@ -13,7 +13,7 @@ use matrix_sdk::{
 
 //iced (gui) imports
 //use iced::widget::{container};
-use iced::{executor, Application, Command, Element, Settings, Text, Container, Length, Scrollable, Column};
+use iced::{executor, button, Button, Application, Command, Element, Settings, Text, Container, Length, Column};
 
 //main
 #[tokio::main]
@@ -40,7 +40,17 @@ async fn main() {
 enum Message {
     SyncRoom,
     ButtonPresed,
+    MsgFound(Result<matrixmsg, Error>),
 
+}
+//make error handling later
+#[derive(Debug, Clone)]
+enum Error {
+}
+
+#[derive(Debug, Clone)]
+struct matrixmsg {
+    msg: String,
 }
 
 
@@ -49,8 +59,13 @@ async fn icedtest() -> iced::Result  {
 }
 
 //Shows text
-//f
-struct Hello;
+enum Hello {
+    Start,
+    OnStart {
+        btn: button::State,
+    },
+    LoadMsg,
+}
 
 impl Application for Hello {
     type Executor = executor::Default;
@@ -58,7 +73,10 @@ impl Application for Hello {
     type Flags = ();
 
     fn new(_flags: ()) -> (Hello, Command<Message>) {
-        (Hello, Command::none())
+        (
+            Hello::Start,
+            Command::none(),
+        )
     }
 
     fn title(&self) -> String {
@@ -68,11 +86,19 @@ impl Application for Hello {
     fn update(&mut self, _message: Message) -> Command<Message> {
         match _message {
 			Message::SyncRoom => {
-				//do sutff
+				*self = Hello::OnStart { 
+                    btn: button::State::new(), 
+                };
 				
 			}
             Message::ButtonPresed => {
                 //do stuff
+            }
+            Message::MsgFound(Ok(matrixmsg)) => {
+                // do stuff?
+            }
+            Message::MsgFound(Err(_error)) => {
+                // do stuff? error handling
             }
 		};
 
@@ -80,19 +106,56 @@ impl Application for Hello {
     }
 
     fn view(&mut self) -> Element<Message> {
-        let text = Text::new("bruh")
-                .width(Length::Fill);
-        let text2 = Text::new("bruh")
-                .width(Length::Fill);
-       let content = Column::new()
-           .push(text)
-           .push(text2);
 
-       Container::new(
-           content.width(Length::Fill),
-        )
+        //let button;
+
+        let text3 = Text::new("LoadMsg");
+        let text4 = Text::new("Start"); 
+
+        let content = match self {
+            Hello::Start => Column::new()
+                .push(text4),
+            Hello::LoadMsg => Column::new()
+                .push(text3),
+            Hello::OnStart { btn } => Column::new()
+                .push(
+                    button(btn, "habtegaber").on_press(Message::ButtonPresed),
+                ),
+        };
+
+        Hello::OnStart { 
+            btn,
+            //https://github.com/iced-rs/iced/blob/0.4/examples/todos/src/main.register_event_handler
+            //kolla TasteState::Editing nästa lektione :)
+        let coolbutton = Column::new()
+            .push(
+                Button::new(
+                btn,
+                text4,
+                )
+            );
+        let text = Text::new("bruh");
+        let text2 = Text::new("bruh");
+        let grafik = Column::new()
+           .push(text)
+           .push(text2)
+           .push(content);
+           //.push(testbtn);
+
+       Container::new(grafik)
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .center_x()
+        .center_y()
         .into()
     }
+}
+
+//copy paste från pokemon exempel
+fn button<'a>(state: &'a mut button::State, text: &str) -> Button<'a, Message> {
+    Button::new(state, Text::new(text))
+        .padding(10)
+        //.style(style::Button::Primary)
 }
 
 async fn matrixtest() -> anyhow::Result<()> {
