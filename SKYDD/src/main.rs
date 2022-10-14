@@ -1,8 +1,7 @@
 //BLock_on?? behöver för async i thread!?!?!?
 use futures::executor::block_on;
 
-//jag ÄLSKAR threads
-use std::thread;
+use tokio::time::{sleep, Duration};
 
 //Matrix någonting?
 use std::{convert::TryFrom, str::SplitAsciiWhitespace};
@@ -13,7 +12,7 @@ use matrix_sdk::{
 
 //iced (gui) imports
 //use iced::widget::{container};
-use iced::{executor, button, Button, Application, Command, Element, Settings, Text, Container, Length, Column};
+use iced::{executor, button, Application, Command, Element, Settings, Text, Container, Length, Column};
 
 //main
 #[tokio::main]
@@ -30,16 +29,21 @@ async fn main() {
         let _ = matrixtest().await;
     });
 
-    //flytta till en annan porcess med tokio thread (eller inte)
     icedtest().await.map_err(|err| println!("{:?}", err)).ok();
 
+}
+
+async fn testmsgfunc() -> () {
+    Message::TestMsg;
+    println!("EXECIUTETED!!");
+    Command::perform(future, f)
 }
 
 //Messages between ui and other functions
 #[derive(Debug, Clone)]
 enum Message {
     SyncRoom,
-    ButtonPresed,
+    TestMsg,
     MsgFound(Result<matrixmsg, Error>),
 
 }
@@ -61,9 +65,6 @@ async fn icedtest() -> iced::Result  {
 //Shows text
 enum Hello {
     Start,
-    OnStart {
-        btn: button::State,
-    },
     LoadMsg,
 }
 
@@ -86,13 +87,10 @@ impl Application for Hello {
     fn update(&mut self, _message: Message) -> Command<Message> {
         match _message {
 			Message::SyncRoom => {
-				*self = Hello::OnStart { 
-                    btn: button::State::new(), 
-                };
-				
+			    //do stuff	
 			}
-            Message::ButtonPresed => {
-                //do stuff
+            Message::TestMsg => {
+                *self = Hello::LoadMsg;
             }
             Message::MsgFound(Ok(matrixmsg)) => {
                 // do stuff?
@@ -111,29 +109,17 @@ impl Application for Hello {
 
         let text3 = Text::new("LoadMsg");
         let text4 = Text::new("Start"); 
+        //*self = Hello::LoadMsg; - funkade
+        //testmsgfunc(); - funkade inte
+        Message::TestMsg;
 
         let content = match self {
             Hello::Start => Column::new()
                 .push(text4),
             Hello::LoadMsg => Column::new()
                 .push(text3),
-            Hello::OnStart { btn } => Column::new()
-                .push(
-                    button(btn, "habtegaber").on_press(Message::ButtonPresed),
-                ),
         };
 
-        Hello::OnStart { 
-            btn,
-            //https://github.com/iced-rs/iced/blob/0.4/examples/todos/src/main.register_event_handler
-            //kolla TasteState::Editing nästa lektione :)
-        let coolbutton = Column::new()
-            .push(
-                Button::new(
-                btn,
-                text4,
-                )
-            );
         let text = Text::new("bruh");
         let text2 = Text::new("bruh");
         let grafik = Column::new()
@@ -149,13 +135,6 @@ impl Application for Hello {
         .center_y()
         .into()
     }
-}
-
-//copy paste från pokemon exempel
-fn button<'a>(state: &'a mut button::State, text: &str) -> Button<'a, Message> {
-    Button::new(state, Text::new(text))
-        .padding(10)
-        //.style(style::Button::Primary)
 }
 
 async fn matrixtest() -> anyhow::Result<()> {
