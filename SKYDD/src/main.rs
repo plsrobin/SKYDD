@@ -6,18 +6,18 @@ use tokio::time::{sleep, Duration};
 //Matrix någonting?
 use std::{convert::TryFrom, str::SplitAsciiWhitespace};
 use matrix_sdk::{
-    Client, config::SyncSettings,
-    ruma::{user_id, events::room::message::SyncRoomMessageEvent},
+    Client, config::SyncSettings, 
+    ruma::{room_id, server_name, user_id, events::room::message::SyncRoomMessageEvent, api::client::room::get_room_event},
 };
 
 //iced (gui) imports
 //use iced::widget::{container};
-use iced::{executor, button, Application, Command, Element, Settings, Text, Container, Length, Column};
+use iced::{executor, button, Button, Application, Command, Element, Settings, Text, Container, Length, Column};
 
 //main
 #[tokio::main]
-async fn main() {
-
+async fn main() -> iced::Result {
+    Hello::run(Settings::default())
 
     //thread::spawn(|| icedtest())
 
@@ -25,25 +25,25 @@ async fn main() {
 
 
     //STARTAR THREAD MEN ENDÅ INTE (TOKIO THREAD, funkar :) )
-    tokio::spawn(async move{
+ /*   tokio::spawn(async move{
         let _ = matrixtest().await;
-    });
+    });*/
 
-    icedtest().await.map_err(|err| println!("{:?}", err)).ok();
+    //icedtest().await.map_err(|err| println!("{:?}", err)).ok();
 
 }
 
-async fn testmsgfunc() -> () {
+/*async fn testmsgfunc() -> () {
     Message::TestMsg;
     println!("EXECIUTETED!!");
-    Command::perform(future, f)
-}
+    //Command::perform(future, f)
+} */
 
 //Messages between ui and other functions
 #[derive(Debug, Clone)]
 enum Message {
-    SyncRoom,
-    TestMsg,
+    Search,
+    /*TestMsg,*/
     MsgFound(Result<matrixmsg, Error>),
 
 }
@@ -56,7 +56,24 @@ enum Error {
 struct matrixmsg {
     msg: String,
 }
-
+impl matrixmsg {
+    fn view(&mut self) -> Element<Message> {
+        Column::new()
+            .push(
+                Text::new(&self.msg)
+                    .size(30)
+                    .width(Length::Fill),
+                )
+                .into()
+    }
+    async fn search_msg() -> Result<matrixmsg, Error> {
+        //let response = matrixtest();
+        Ok(matrixmsg {
+            //msg: response.unwrap().to_string(),
+            msg: "snälla fungera".to_string(),
+        })
+    }
+}
 
 async fn icedtest() -> iced::Result  {
     Hello::run(Settings::default())
@@ -64,10 +81,14 @@ async fn icedtest() -> iced::Result  {
 
 //Shows text
 enum Hello {
-    Start,
-    LoadMsg,
+    Start {
+        knapp_state: button::State,
+    },
+    Loading,
+    LoadMsg {
+        matrixmsg: matrixmsg,
+    },
 }
-
 impl Application for Hello {
     type Executor = executor::Default;
     type Message = Message;
@@ -75,7 +96,8 @@ impl Application for Hello {
 
     fn new(_flags: ()) -> (Hello, Command<Message>) {
         (
-            Hello::Start,
+            Hello::Start { knapp_state: button::State::new() },
+            //Command::perform(matrixmsg::search_msg(), Message::MsgFound),
             Command::none(),
         )
     }
@@ -84,51 +106,63 @@ impl Application for Hello {
         String::from("A cool application")
     }
 
-    fn update(&mut self, _message: Message) -> Command<Message> {
-        match _message {
-			Message::SyncRoom => {
-			    //do stuff	
-			}
-            Message::TestMsg => {
-                *self = Hello::LoadMsg;
-            }
+    fn update(&mut self, message: Message) -> Command<Message> {
+        match message {
             Message::MsgFound(Ok(matrixmsg)) => {
-                // do stuff?
+                *self = Hello::LoadMsg {
+                    matrixmsg, 
+                };
+
+                Command::none()
             }
             Message::MsgFound(Err(_error)) => {
-                // do stuff? error handling
-            }
-		};
+                println!("något error!?!?!?");
 
-		Command::none()
+                Command::none()
+            }
+			Message::Search => match self { 
+                Hello::Loading => Command::none(),
+                _ => {
+                    *self = Hello::Loading;
+                    Command::perform(matrixmsg::search_msg(), Message::MsgFound)
+                }
+            },
+		}
     }
 
     fn view(&mut self) -> Element<Message> {
 
         //let button;
 
-        let text3 = Text::new("LoadMsg");
+        //fuckyou text3
+        //let text3 = Text::new("LoadMsg");
         let text4 = Text::new("Start"); 
         //*self = Hello::LoadMsg; - funkade
         //testmsgfunc(); - funkade inte
-        Message::TestMsg;
+        //Message::TestMsg; - funkade inte
 
         let content = match self {
-            Hello::Start => Column::new()
-                .push(text4),
-            Hello::LoadMsg => Column::new()
-                .push(text3),
+            Hello::Start { knapp_state, ..  } => Column::new()
+                .push(text4)
+                .push(button(knapp_state, "Hej :)").on_press(Message::Search)),
+            Hello::LoadMsg { matrixmsg } => Column::new()
+                .push(matrixmsg.view()),
+            Hello::Loading => Column::new()
+                .push(Text::new("Searching for messages...").size(40)),
         };
 
         let text = Text::new("bruh");
         let text2 = Text::new("bruh");
-        let grafik = Column::new()
-           .push(text)
-           .push(text2)
-           .push(content);
-           //.push(testbtn);
+        
+        //let mut state = button::State::new();
+        //let knapp = Button::new(&mut state, Text::new("hej"));
 
-       Container::new(grafik)
+        /*let grafik = Column::new()
+           .push(text)
+           .push(text2);
+           //.push(testbtn); */
+
+       Container::new(content)
         .width(Length::Fill)
         .height(Length::Fill)
         .center_x()
@@ -137,7 +171,12 @@ impl Application for Hello {
     }
 }
 
-async fn matrixtest() -> anyhow::Result<()> {
+fn button<'a>(state: &'a mut button::State, text: &str) -> Button<'a, Message> {
+    Button::new(state, Text::new(text))
+        .padding(10)
+}
+
+async fn matrixtest() -> anyhow::Result<String> {
 	let userid = user_id!("@testuser3:norrland.xyz");
 	let client = Client::builder().user_id(userid).build().await?;
 
@@ -146,14 +185,21 @@ async fn matrixtest() -> anyhow::Result<()> {
 
 	client.register_event_handler(|ev: SyncRoomMessageEvent| async move {
 		println!("Received a message {:?}", ev);
-        //funkar inte eftersom showmsg inte är global
-        //showmsg = "{:?}";
+        //let to_gui = "{:?}";
 	})
 	.await;
-
     // Syncing is important to synchronize the client state with the server.
     // This method will never return.
     client.sync(SyncSettings::default()).await;
 
-    Ok(())	
+
+    //rum saker???
+    let room = client.get_room(room_id!("!FVZaPevCZhhurovOAA:norrland.xyz"));
+
+    let respond = "amogus";
+    //få ut medelenden ur roomid :)))))
+   /* Ok(matrixmsg {
+        msg: "test".to_string(),
+    }) */
+    Ok(respond.to_string())
 }
