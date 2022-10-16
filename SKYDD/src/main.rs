@@ -1,18 +1,26 @@
 //BLock_on?? behöver för async i thread!?!?!?
-use futures::executor::block_on;
+use futures::{executor::block_on, TryFutureExt};
 //test
 use tokio::time::{sleep, Duration};
 
 //Matrix någonting?
-use std::{convert::TryFrom, str::SplitAsciiWhitespace};
+use std::{convert::TryFrom, str::SplitAsciiWhitespace, };
 use matrix_sdk::{
-    Client, config::SyncSettings, 
-    ruma::{room_id, server_name, user_id, events::room::message::SyncRoomMessageEvent, api::client::room::get_room_event},
+    Client, config::SyncSettings, room::MessagesOptions, 
+    ruma::{room_id, server_name, user_id,  events::{room::message::{SyncRoomMessageEvent, OriginalSyncRoomMessageEvent, RoomMessageEventContent, TextMessageEventContent, MessageType,}, }, api::client::room::get_room_event}, ClientBuildError, ClientBuilder, ruma::{events::room::member::StrippedRoomMemberEvent,}, room::Room,
+    ruma::events::{
+        AnyMessageLikeEvent, AnyMessageLikeEventContent, AnyStateEvent, AnyToDeviceEvent,
+    }, HttpError,
 };
 
 //iced (gui) imports
 //use iced::widget::{container};
-use iced::{executor, button, Button, Application, Command, Element, Settings, Text, Container, Length, Column};
+use iced::{executor, button, Button, Application, Command, Element, Settings, Text, Container, Length, Column, pane_grid::Direction};
+
+use url::{Url, ParseError};
+
+//command kan köra asynckod
+use async_trait::async_trait;
 
 //main
 #[tokio::main]
@@ -50,6 +58,38 @@ enum Message {
 //make error handling later
 #[derive(Debug, Clone)]
 enum Error {
+    ClientBuildError,
+    MatrixError,
+    ParseError,
+    HttpError,
+}
+
+impl From<url::ParseError> for Error {
+    fn from(error: url::ParseError) -> Error {
+        dbg!(error);
+        Error::ParseError
+    }
+}
+
+impl From<matrix_sdk::HttpError> for Error {
+    fn from(error: HttpError) -> Error {
+        dbg!(error);
+        Error::HttpError
+    }
+}
+
+impl From<matrix_sdk::ClientBuildError> for Error {
+    fn from(error: ClientBuildError) -> Error {
+        dbg!(error);
+        Error::ClientBuildError
+    }
+
+}
+impl From<matrix_sdk::Error> for Error {
+    fn from(error: matrix_sdk::Error) -> Error {
+        dbg!(error);
+        Error::MatrixError
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -66,17 +106,66 @@ impl matrixmsg {
                 )
                 .into()
     }
-    async fn search_msg() -> Result<matrixmsg, Error> {
-        //let response = matrixtest();
+    async fn search_msg() -> anyhow::Result<matrixmsg, Error> {
+        //let response = matrixtest().await.unwrap().to_string();
+        //println!("sent string!");
+	    let userid = user_id!("@testuser3:norrland.xyz");
+	    let client = Client::builder().user_id(userid).build().await?;
+        client.login(userid, "yahoogimmickchamberhypnoticechounfoundedbonedunpainted", None, None).await?;
+        //let room = client.get_room(room_id!("!FVZaPevCZhhurovOAA:norrland.xyz"));
+        //let options = MessagesOptions::backward("t47429-4392820_219380_26003_2265");
+        //let response = room.messages(options).await;
+        //client.sync(SyncSettings::default()).await;
+        //DETTA FUNGERAR INTE ÄN, HUR FAN GÖR JAG MESSAGE EVENTS TILL STRING?
+       // OVAN ÄR SKIT (kanske)
+       
+        //let mut client_builder = Client::builder().homeserver_url("norrland.xyz");
+
+        //crypto cache?? Den sparar kryptionsnycklar lokalt tror inget annat?
+        //let home = dirs::data_dir().expect("no home directory found").join("getting_started");
+        //client_builder = client_builder.sled_store(home, None).await?;
+
+       	//woah vi har inte crashat än... eller?
+       	//println!("1. logged in as {userid}, initial sync is next..."); 
+		
+		//initial sync, uuuhhh 
+        println!("starting sync_once");
+		client.sync_once(SyncSettings::default()).await.unwrap();
+        //println!("2. initial sync done!, addimg message event..."); 
+		
+	    //vet inte vad detta innebär. Förklaringen var: "since we called `sync_once` before we
+        //entered our sync loop we must pass \n that sync token to `sync`	
+		//let settings = SyncSettings::default().token(client.sync_token().await.unwrap());
+
+        //detta fortsätter synca för evigt, det vill inte JAG
+        //client.sync(settings).await?;
+        //println!("1. started proccess!!!");
+        
+        //let homeserver_url = Url::parse("https:://matrix.norrland.xyz")?; 
+        //let hms_url = homeserver("norrland.xyz")
+        //println!("2. Defined homerserver, defining client next");
+        //let client = Client::new("norrland.xyz").await?;
+        //println!("3. Defined Client, defining user next");
+        //let user = "testuser3";
+        //println!("4. Defined user, defining response next");
+
+        /*let response = client
+            .login_username(user, "yahoogimmickchamberhypnoticechounfoundedbonedunpainted")
+            .initial_device_display_name("uuuuhhh")
+            .send()
+            .await?; */
+        println!("last step...");
+        //denna fungerar bra som fan 
+        //let respond = client.access_token().unwrap();
+        
+        //detta var istället jävligt jobbigt
+        let room = client.get_room(room_id!("!FVZaPevCZhhurovOAA:norrland.xyz")).unwrap();
+        let options = MessagesOptions::new(matrix_sdk::ruma::api::client::message::get_message_events::v3::Direction::Forward);
+        let message = room.messages(options).await.unwrap().chunk.last().unwrap().event.json().to_string();
         Ok(matrixmsg {
-            //msg: response.unwrap().to_string(),
-            msg: "snälla fungera".to_string(),
+            msg: message,
         })
     }
-}
-
-async fn icedtest() -> iced::Result  {
-    Hello::run(Settings::default())
 }
 
 //Shows text
@@ -89,6 +178,7 @@ enum Hello {
         matrixmsg: matrixmsg,
     },
 }
+#[async_trait]
 impl Application for Hello {
     type Executor = executor::Default;
     type Message = Message;
@@ -183,11 +273,11 @@ async fn matrixtest() -> anyhow::Result<String> {
     // First we need to log in.
     client.login(userid, "yahoogimmickchamberhypnoticechounfoundedbonedunpainted", None, None).await?;
 
-	client.register_event_handler(|ev: SyncRoomMessageEvent| async move {
+	/*client.register_event_handler(|ev: SyncRoomMessageEvent| async move {
 		println!("Received a message {:?}", ev);
         //let to_gui = "{:?}";
 	})
-	.await;
+	.await;*/
     // Syncing is important to synchronize the client state with the server.
     // This method will never return.
     client.sync(SyncSettings::default()).await;
