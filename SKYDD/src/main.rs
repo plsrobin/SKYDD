@@ -101,7 +101,7 @@ impl matrixmsg {
         Column::new()
             .push(
                 Text::new(&self.msg)
-                    .size(30)
+                    .size(12)
                     .width(Length::Fill),
                 )
                 .into()
@@ -160,8 +160,8 @@ impl matrixmsg {
         
         //detta var istället jävligt jobbigt
         let room = client.get_room(room_id!("!FVZaPevCZhhurovOAA:norrland.xyz")).unwrap();
-        let options = MessagesOptions::new(matrix_sdk::ruma::api::client::message::get_message_events::v3::Direction::Forward);
-        let message = room.messages(options).await.unwrap().chunk.last().unwrap().event.json().to_string();
+        let options = MessagesOptions::new(matrix_sdk::ruma::api::client::message::get_message_events::v3::Direction::Backward);
+        let message = room.messages(options).await.unwrap().chunk.first().unwrap().event.json().to_string();
         Ok(matrixmsg {
             msg: message,
         })
