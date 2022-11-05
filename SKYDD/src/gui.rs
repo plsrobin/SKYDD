@@ -3,23 +3,28 @@ use super::*;
 //imports
 
 //iced (gui) imports
-use iced::{executor, button, Button, Application, Command, Element, Text, Container, Length, Column};
-
+use iced::{executor, Subscription, button, Button, Application, Command, Element, Text, Container, Length, Column};
 //lets iced::command run async code
 use async_trait::async_trait;
-
+/*
+#[derive(Debug, Clone)]
+pub struct Events {
+    last: Vec<iced_native::Event>,
+}*/
 
 //Messages between ui and other functions
 #[derive(Debug, Clone)]
 pub enum Message {
+    EventOccurred(iced_native::Event),
     Search,
-    /*TestMsg,*/
     MsgFound(Result<MatrixMsg, Error>),
-
 }
 
 //Gui states
 pub enum Gui {
+    Events {
+        last: Vec<iced_native::Event>,
+    },
     Start {
         knapp_state: button::State,
     },
@@ -50,6 +55,10 @@ impl Application for Gui {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
+            Message::EventOccurred(event) => {
+                //events_struct.last.push(event);               
+                Command::none()
+            }
             Message::MsgFound(Ok(matrixmsg)) => {
                 *self = Gui::LoadMsg {
                     matrixmsg,
@@ -72,6 +81,10 @@ impl Application for Gui {
 		}
     }
 
+    fn subscription(&self) -> Subscription<Message> {
+        iced_native::subscription::events().map(Message::EventOccurred)
+    }
+
     fn view(&mut self) -> Element<Message> {
 
         let text4 = Text::new("Start");
@@ -84,6 +97,12 @@ impl Application for Gui {
                 .push(matrixmsg.view()),
             Gui::Loading => Column::new()
                 .push(Text::new("Searching for messages...").size(40)),
+            Gui::Events { last, .. } => last.iter().fold(
+				Column::new().spacing(10),
+				|column, event| {
+					column.push(Text::new(format!("{:?}", event)).size(40))	
+				},
+			),
         };
 
        Container::new(content)
