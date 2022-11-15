@@ -3,7 +3,7 @@ use super::*;
 //imports
 
 //iced (gui) imports
-use iced::{executor, button, Button, Application, Command, Element, Text, Container, Length, Column};
+use iced::{executor, button, Button, Application, Command, Element, Text, Container, Length, Column, Row};
 //lets iced::command run async code
 use async_trait::async_trait;
 
@@ -27,6 +27,7 @@ pub enum Message {
 
 //Gui states
 pub enum Gui {
+    MainView,
     Events {
         last: iced_native::Event,
     },
@@ -47,7 +48,9 @@ impl Application for Gui {
 
     fn new(_flags: ()) -> (Gui, Command<Message>) {
         (
-            Gui::Start { knapp_state: button::State::new() },
+            //Gui::Start { knapp_state: button::State::new() },
+            Gui::MainView,
+
             //Command::perform(matrixmsg::search_msg(), Message::MsgFound), -- example for running
             //with command
             Command::none(),
@@ -128,11 +131,133 @@ impl Application for Gui {
 
     fn view(&mut self) -> Element<Message> {
 
-        let text4 = Text::new("Start");
+        let text_start= Text::new("Start");
 
+        //msg 1
+        let msg_icon1 = Column::new()
+            .push(Text::new("\"Bild1\""));
+        let msg_text1 = Column::new()
+            .push(Text::new("User1"))
+            .push(Text::new("Medelande1"));
+        let example_msg1 = Row::new()
+            .push(msg_icon1)
+            .padding(10)
+            .push(msg_text1);
+
+        //msg 2
+        let msg_icon2 = Column::new()
+            .push(Text::new("\"Bild2\""));
+        let msg_text2 = Column::new()
+            .push(Text::new("User2"))
+            .push(Text::new("Medelande2"));
+        let example_msg2 = Row::new()
+            .push(msg_icon2)
+            .padding(10)
+            .push(msg_text2);
+
+        //msg 3
+        let msg_icon3 = Column::new()
+            .push(Text::new("\"Bild3\""));
+        let msg_text3 = Column::new()
+            .push(Text::new("User3"))
+            .push(Text::new("Medelande3"));
+        let example_msg3 = Row::new()
+            .push(msg_icon3)
+            .padding(10)
+            .push(msg_text3);
+        
+        //msg 4
+        let msg_icon4 = Column::new()
+            .push(Text::new("\"Bild4\""));
+        let msg_text4 = Column::new()
+            .push(Text::new("User4"))
+            .push(Text::new("Medelande4"));
+        let example_msg4 = Row::new()
+            .push(msg_icon4)
+            .padding(10)
+            .push(msg_text4);
+
+        //msg 5
+        let msg_icon5 = Column::new()
+            .push(Text::new("\"Bild5\""));
+        let msg_text5 = Column::new()
+            .push(Text::new("User5"))
+            .push(Text::new("Medelande5"));
+        let example_msg5 = Row::new()
+            .push(msg_icon5)
+            .padding(10)
+            .push(msg_text5);
+
+        //current messages
+        let message_view = Column::new()
+            .push(example_msg1)
+            .push(example_msg2)
+            .push(example_msg3)
+            .push(example_msg4)
+            .push(example_msg5)
+            .width(Length::Fill)
+            .height(Length::FillPortion(8))
+            .align_items(iced::Alignment::Start);
+        //Room description
+        let current_desc = Column::new()
+            .push(Text::new("Crab (jeff@norrland.xyz)"));
+        //current room's icon (description)
+        let current_icon = Column::new()
+            .push(Text::new("\"Bild\""));
+        //description of rooms
+        let room_desc = Row::new()
+            .push(current_icon)
+            .push(current_desc)
+            .height(Length::FillPortion(1))
+            .width(Length::Fill);
+        let middle_view = Column::new()
+            .push(room_desc)
+            .push(message_view)
+            .width(Length::FillPortion(5))
+            .height(Length::Fill);
+
+        //list of rooms
+        let room_view = Column::new()
+            .push(Text::new("Rum1"))
+            .push(Text::new("Rum2"))
+            .push(Text::new("Rum3"))
+            .push(Text::new("Rum4"))
+            .push(Text::new("Rum4"))
+            .push(Text::new("Rum4"))
+            .push(Text::new("Rum4"))
+            .push(Text::new("Rum4"))
+            .push(Text::new("Rum5"))
+            .push(Text::new("Rum6"))
+            .width(Length::FillPortion(1))
+            .height(Length::Fill)
+            .align_items(iced::Alignment::Start);
+        let input = Column::new()
+            //gö senare?
+            //.push(TextInput::new("...", value, Message::CommandChange)
+            .push(Text::new("TextInput"))
+            .height(Length::FillPortion(2))
+            .width(Length::Fill)
+            .align_items(iced::Alignment::Start);
+        let top = Row::new()
+            .push(room_view)
+            .push(middle_view)
+            .height(Length::FillPortion(10));
+        let overview = Column::new()
+            .push(top)
+            .push(input);
         let content = match self {
+            Gui::MainView => Column::new()
+                .push(overview)
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .align_items(iced::Alignment::End),
+                //.push(example_msg1)
+                //.push(example_msg2)
+                //.push(example_msg3)
+                //.push(example_msg4)
+                //.push(example_msg5),
             Gui::Start { knapp_state, ..  } => Column::new()
-                .push(text4)
+                .push(text_start)
                 .push(button(knapp_state, "Hej :)").on_press(Message::Search)),
             Gui::LoadMsg { matrixmsg } => Column::new()
                 .push(matrixmsg.view()),
@@ -145,8 +270,8 @@ impl Application for Gui {
        Container::new(content)
         .width(Length::Fill)
         .height(Length::Fill)
-        .center_x()
-        .center_y()
+        //.center_x()
+        //.center_y()
         .into()
     }
 }
