@@ -1,11 +1,15 @@
 use super::*;
 
+use iced_native::{subscription::events, widget::column};
 //imports
 //Matrix imports
 use matrix_sdk::{
     Client, config::SyncSettings, room::MessagesOptions,
     ruma::{room_id, user_id,}, ClientBuildError, HttpError,
 };
+
+use iced::{Length};
+use iced::{Column, Row, Text};
 
 
 
@@ -45,18 +49,25 @@ impl From<url::ParseError> for Error {
 
 #[derive(Debug, Clone)]
 pub struct MatrixMsg {
-    msg: String,
+    //msg: String,
+    msg: Vec<matrix_sdk::deserialized_responses::TimelineEvent>,
 }
 
 impl MatrixMsg {
     pub fn view(&mut self) -> Element<Message> {
-        Column::new()
-            .push(
-                Text::new(&self.msg)
-                    .size(12)
-                    .width(Length::Fill),
-                )
-                .into()
+        
+        let events = self.msg.iter().fold(
+            Column::new().spacing(10),
+            | column, event | {
+                //column.push(Text::new(format!("{:?}", event)).size(12))
+                //column.push(Text::new(format!("{}", event.event.json().to_string().split("\",\"msgtype").take(1).collect::<Vec<_>>()[0].to_string().split("body\":\"").take(2).collect::<Vec<_>>()[0])).size(24))
+                column.push(Text::new(format!("{}", event.event.json().to_string().split("\",\"msgtype").take(1).collect::<Vec<_>>()[0].to_string().split("body\":\"").nth(1).unwrap().to_string())).size(24))
+            }
+        );  
+
+       Column::new()
+           .push(events)
+                .into() 
     }
     pub async fn search_msg() -> anyhow::Result<MatrixMsg, Error> {
 	    let userid = user_id!("@testuser3:norrland.xyz");
@@ -71,7 +82,8 @@ impl MatrixMsg {
 
         let room = client.get_room(room_id!("!FVZaPevCZhhurovOAA:norrland.xyz")).unwrap();
         let options = MessagesOptions::new(matrix_sdk::ruma::api::client::message::get_message_events::v3::Direction::Backward);
-        let message = room.messages(options).await.unwrap().chunk.first().unwrap().event.json().to_string();
+        //let message = room.messages(options).await.unwrap().chunk.first().unwrap().event.json().to_string();
+        let message = room.messages(options).await.unwrap().chunk;
         Ok(MatrixMsg {
             msg: message,
         })

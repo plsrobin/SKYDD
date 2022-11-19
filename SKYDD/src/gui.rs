@@ -3,12 +3,17 @@ use super::*;
 //imports
 
 //iced (gui) imports
-use iced::{executor, button, Button, Application, Command, Element, Text, Container, Length, Column, Row};
-//lets iced::command run async code
+use iced::{executor, Application, Command, Element, Length};
+use iced::{button, Button, Column, Row, Text, Container}; 
+//use iced_native::widget::{button};
+
 use async_trait::async_trait;
 
 use iced_native::keyboard::KeyCode;
 use iced_native::subscription::{self, Subscription};
+
+//use iced_native::widget::Column;
+use matrix_sdk::ruma::api::client::push;
 /*
 #[derive(Debug, Clone)]
 pub struct Events {
@@ -27,12 +32,14 @@ pub enum Message {
 
 //Gui states
 pub enum Gui {
-    MainView,
+    MainView {
+        matrixmsg: MatrixMsg,
+    },
     Events {
         last: iced_native::Event,
     },
     Start {
-        knapp_state: button::State,
+        knapp_state: iced_native::widget::button::State,
     },
     Loading,
     LoadMsg {
@@ -48,9 +55,7 @@ impl Application for Gui {
 
     fn new(_flags: ()) -> (Gui, Command<Message>) {
         (
-            //Gui::Start { knapp_state: button::State::new() },
-            Gui::MainView,
-
+            Gui::Start { knapp_state: button::State::new() },
             //Command::perform(matrixmsg::search_msg(), Message::MsgFound), -- example for running
             //with command
             Command::none(),
@@ -85,7 +90,10 @@ impl Application for Gui {
                     Command::none()
                 }
             Message::MsgFound(Ok(matrixmsg)) => {
-                *self = Gui::LoadMsg {
+               /* *self = Gui::LoadMsg {
+                    matrixmsg,
+                }; */
+                *self = Gui::MainView {
                     matrixmsg,
                 };
 
@@ -133,6 +141,7 @@ impl Application for Gui {
 
         let text_start= Text::new("Start");
 
+        /*
         //msg 1
         let msg_icon1 = Column::new()
             .push(Text::new("\"Bild1\""));
@@ -171,7 +180,7 @@ impl Application for Gui {
             .push(Text::new("\"Bild4\""));
         let msg_text4 = Column::new()
             .push(Text::new("User4"))
-            .push(Text::new("Medelande4"));
+            .push(Text::new("längtar till den obligatoriska diskussionen vid jul när man tittar på kalle anka och gubbarna snackar om hur dom har tagit bort klippet med svarta flickan i tomtens verkstad och hur det är trams osv osv"));
         let example_msg4 = Row::new()
             .push(msg_icon4)
             .padding(10)
@@ -187,14 +196,15 @@ impl Application for Gui {
             .push(msg_icon5)
             .padding(10)
             .push(msg_text5);
-
+        
         //current messages
         let message_view = Column::new()
-            .push(example_msg1)
+           /* .push(example_msg1)
             .push(example_msg2)
             .push(example_msg3)
-            .push(example_msg4)
-            .push(example_msg5)
+            .push(example_msg4) */
+            .push(example_msg5) 
+            //.push(matrixmsg.view())
             .width(Length::Fill)
             .height(Length::FillPortion(8))
             .align_items(iced::Alignment::Start);
@@ -217,7 +227,7 @@ impl Application for Gui {
             .height(Length::Fill);
 
         //list of rooms
-        let room_view = Column::new()
+        /*let room_view = Column::new()
             .push(Text::new("Rum1"))
             .push(Text::new("Rum2"))
             .push(Text::new("Rum3"))
@@ -230,7 +240,7 @@ impl Application for Gui {
             .push(Text::new("Rum6"))
             .width(Length::FillPortion(1))
             .height(Length::Fill)
-            .align_items(iced::Alignment::Start);
+            .align_items(iced::Alignment::Start); */
         let input = Column::new()
             //gö senare?
             //.push(TextInput::new("...", value, Message::CommandChange)
@@ -244,13 +254,70 @@ impl Application for Gui {
             .height(Length::FillPortion(10));
         let overview = Column::new()
             .push(top)
-            .push(input);
+            .push(input); */
         let content = match self {
-            Gui::MainView => Column::new()
-                .push(overview)
+            Gui::MainView { matrixmsg } => Column::new()
+                .push(Row::new()
+                      .push(Column::new()
+                        //joined rooms view
+                            .push(Column::new()
+                                .push(Text::new("Rum"))
+                                .push(Text::new("Rum"))
+                                .push(Text::new("Rum"))
+                                .push(Text::new("Rum"))
+                                .push(Text::new("Rum"))
+                                .push(Text::new("Rum"))
+                                .push(Text::new("Rum"))
+                                .push(Text::new("Rum"))
+                                .push(Text::new("Rum"))
+                                .push(Text::new("Rum"))
+                                )
+                            //style
+                            .width(Length::FillPortion(2))
+                            )
+                      //current room  view
+                      .push(Column::new()
+                            //Room Description
+                            .push(Row::new()
+                                  //icon
+                                  .push(Column::new()
+                                        .push(Text::new("\"Bild\""))
+                                        )
+                                  //room info
+                                  .push(Column::new()
+                                        .push(Text::new("Crab (jeff@norrland.xyz)"))
+                                        .push(Text::new("This is the current room description"))
+                                        .height(Length::FillPortion(2))
+                                        )
+                                  //style desc
+                                  .height(Length::FillPortion(2))
+                                  )
+                            //Messages
+                            .push(Column::new()
+                                .push(matrixmsg.view())
+                                //style msg
+                                .height(Length::FillPortion(5))
+                                )
+                            .push(Column::new()
+                                .push(Text::new("TextInput"))
+                                .height(Length::FillPortion(2))
+                                .align_items(iced::Alignment::Start)
+                        )
+                            //style desc & msg & input
+                            .width(Length::FillPortion(8))
+                        ) 
+                        //style everything
+                    )
+                    
+                //inputfield
+                 .push(Column::new()
+                        .push(Text::new("TextInput"))
+                        .height(Length::FillPortion(2))
+                        .align_items(iced::Alignment::Start)
+                        )
                 .width(Length::Fill)
                 .height(Length::Fill)
-                .align_items(iced::Alignment::End),
+                .align_items(iced::Alignment::Start),
                 //.push(example_msg1)
                 //.push(example_msg2)
                 //.push(example_msg3)
@@ -276,7 +343,6 @@ impl Application for Gui {
     }
 }
 
-pub fn button<'a>(state: &'a mut button::State, text: &str) -> Button<'a, Message> {
+fn button<'a>(state: &'a mut button::State, text: &str) -> Button<'a, Message> {
     Button::new(state, Text::new(text))
-        .padding(10)
 }

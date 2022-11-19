@@ -1,5 +1,5 @@
 //iced imports, used to start gui.rs
-use iced::{Application, Element, Settings, Text, Length, Column};
+use iced::{Application, Element, Settings};
 
 //imports gui.rs
 use crate::gui::Gui;
