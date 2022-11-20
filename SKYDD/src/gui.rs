@@ -33,7 +33,8 @@ pub enum Message {
 //Gui states
 pub enum Gui {
     MainView {
-        matrixmsg: MatrixMsg,
+        msg: MatrixMsg,
+        room: MatrixMsg,
     },
     Events {
         last: iced_native::Event,
@@ -94,7 +95,8 @@ impl Application for Gui {
                     matrixmsg,
                 }; */
                 *self = Gui::MainView {
-                    matrixmsg,
+                    msg: matrixmsg.clone(),
+                    room: matrixmsg,
                 };
 
                 Command::none()
@@ -256,21 +258,12 @@ impl Application for Gui {
             .push(top)
             .push(input); */
         let content = match self {
-            Gui::MainView { matrixmsg } => Column::new()
+            Gui::MainView { msg, room } => Column::new()
                 .push(Row::new()
                       .push(Column::new()
                         //joined rooms view
                             .push(Column::new()
-                                .push(Text::new("Rum"))
-                                .push(Text::new("Rum"))
-                                .push(Text::new("Rum"))
-                                .push(Text::new("Rum"))
-                                .push(Text::new("Rum"))
-                                .push(Text::new("Rum"))
-                                .push(Text::new("Rum"))
-                                .push(Text::new("Rum"))
-                                .push(Text::new("Rum"))
-                                .push(Text::new("Rum"))
+                                .push(room.rms())
                                 )
                             //style
                             .width(Length::FillPortion(2))
@@ -294,7 +287,7 @@ impl Application for Gui {
                                   )
                             //Messages
                             .push(Column::new()
-                                .push(matrixmsg.view())
+                                .push(msg.view())
                                 //style msg
                                 .height(Length::FillPortion(5))
                                 )
