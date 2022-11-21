@@ -76,12 +76,14 @@ impl Application for Gui {
                 match keycode {
                     KeyCode::A => {
                         println!("A was pressed!");
+                        *self = Gui::Loading;
+                        Command::perform(MatrixMsg::search_msg(), Message::MsgFound)
                     },
                     _ => {
                         println!("something was pressed!");
+                        Command::none()
                     },
                 }
-                Command::none()
             }
             Message::EventOccurred(last) => {
                     *self = Gui::Events { 
@@ -142,7 +144,6 @@ impl Application for Gui {
     fn view(&mut self) -> Element<Message> {
 
         let text_start= Text::new("Start");
-
         /*
         //msg 1
         let msg_icon1 = Column::new()
