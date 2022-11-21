@@ -9,7 +9,7 @@ use matrix_sdk::{
 };
 
 use iced::{Length};
-use iced::{Column, Row, Text};
+use iced::{Column, Command, Row, Text};
 
 
 
@@ -53,7 +53,13 @@ pub struct MatrixMsg {
     msg: Vec<matrix_sdk::deserialized_responses::TimelineEvent>,
     joined_rms: Vec<matrix_sdk::room::Joined>,
 }
-
+//Kanske framtid???? :)
+/*
+#[derive(Debug, Clone)]
+pub enum Way {
+    Up,
+    Down,
+}*/
 impl MatrixMsg {
  
     //returns all joined rooms
@@ -69,6 +75,19 @@ impl MatrixMsg {
             .push(rooms)
             .into()
     }
+
+    //Hardcodear rum istället :) kanske framtid? 
+    /*
+    pub fn switch_room(&mut self, current: u64, way: Way) -> Command<Message> {
+        self.joined_rms
+        match way {
+            Way::Up => {
+                
+            }
+            Way::Down => {
+            }
+        }
+    }*/
 
     //returns messages of room
     pub fn view(&mut self) -> Element<Message> {
@@ -86,7 +105,7 @@ impl MatrixMsg {
            .push(events)
            .into() 
     }
-    pub async fn search_msg() -> anyhow::Result<MatrixMsg, Error> {
+    pub async fn search_msg(req_room: String) -> anyhow::Result<MatrixMsg, Error> {
 	    let userid = user_id!("@testuser3:norrland.xyz");
 	    let client = Client::builder().user_id(userid).build().await?;
         client.login(userid, "yahoogimmickchamberhypnoticechounfoundedbonedunpainted", None, None).await?;
@@ -97,8 +116,20 @@ impl MatrixMsg {
 
         println!("last step...");
 
-        let room = client.get_room(room_id!("!FVZaPevCZhhurovOAA:norrland.xyz")).unwrap();
-        let mut options = MessagesOptions::new(matrix_sdk::ruma::api::client::message::get_message_events::v3::Direction::Backward);
+        let room;
+        //if req_room.contains("!") {
+            //okej room_id kunde inte vara en variabel så får vara static...
+            if req_room.eq("!BQrVnPiSarDPOcwhPJ:norrland.xyz") {
+                room = client.get_room(room_id!("!FVZaPevCZhhurovOAA:norrland.xyz")).unwrap();
+            }
+            else {
+                room = client.get_room(room_id!("!BQrVnPiSarDPOcwhPJ:norrland.xyz")).unwrap();
+            }
+           
+        //} else {
+        //    room = client.get_room(room_id!("!FVZaPevCZhhurovOAA:norrland.xyz")).unwrap();
+        //}
+        let options = MessagesOptions::new(matrix_sdk::ruma::api::client::message::get_message_events::v3::Direction::Backward);
         //let message = room.messages(options).await.unwrap().chunk.first().unwrap().event.json().to_string();
         let message = room.messages(options).await.unwrap().chunk;
 

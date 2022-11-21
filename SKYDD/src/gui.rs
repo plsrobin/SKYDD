@@ -74,10 +74,17 @@ impl Application for Gui {
             }
             Message::KeyPressed(keycode) => {
                 match keycode {
-                    KeyCode::A => {
-                        println!("A was pressed!");
+                    KeyCode::J => {
+                        println!("J was pressed!");
                         *self = Gui::Loading;
-                        Command::perform(MatrixMsg::search_msg(), Message::MsgFound)
+                        //byter till detta rum :)
+                        Command::perform(MatrixMsg::search_msg("!BQrVnPiSarDPOcwhPJ:norrland.xyz".to_string()), Message::MsgFound)
+                    },
+                    KeyCode::K => {
+                        println!("K was pressed!");
+                        *self = Gui::Loading;
+                        //none gör ingenting :)
+                        Command::perform(MatrixMsg::search_msg("!FVZaPevCZhhurovOAA:norrland.xyz".to_string()), Message::MsgFound)
                     },
                     _ => {
                         println!("something was pressed!");
@@ -112,7 +119,8 @@ impl Application for Gui {
                 Gui::Loading => Command::none(),
                 _ => {
                     *self = Gui::Loading;
-                    Command::perform(MatrixMsg::search_msg(), Message::MsgFound)
+                    //none gör ingenting :), tar till default
+                    Command::perform(MatrixMsg::search_msg("none".to_string()), Message::MsgFound)
                 }
             },
 		}
@@ -279,7 +287,7 @@ impl Application for Gui {
                                         )
                                   //room info
                                   .push(Column::new()
-                                        .push(Text::new("Crab (jeff@norrland.xyz)"))
+                                        .push(Text::new("Current Room"))
                                         .push(Text::new("This is the current room description"))
                                         .height(Length::FillPortion(2))
                                         )
